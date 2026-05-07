@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ProductController extends AbstractController
 {
     public function __construct(
-        private ProductService $productService,
+        private readonly ProductService $productService,
     )
     {
     }
@@ -37,8 +37,14 @@ final class ProductController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->productService->create($product);
-            return $this->redirectToRoute('product_index');
+            try {
+                $this->productService->create($product);
+                $this->addFlash('success', 'Product created successfully.');
+
+                return $this->redirectToRoute('product_index');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Failed to create product.');
+            }
         }
 
         return $this->render('product/create.html.twig', [
@@ -52,15 +58,21 @@ final class ProductController extends AbstractController
         $product = $this->productService->findById($id);
 
         if (!$product) {
-            throw $this->createNotFoundException('Product not found');
+            throw $this->createNotFoundException('Product not found.');
         }
 
         $form = $this->createForm(ProductType::class, $product);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->productService->update($product);
-            return $this->redirectToRoute('product_index');
+            try {
+                $this->productService->update($product);
+                $this->addFlash('success', 'Product updated successfully.');
+
+                return $this->redirectToRoute('product_index');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Failed to update product.');
+            }
         }
 
         return $this->render('product/edit.html.twig', [
@@ -75,10 +87,16 @@ final class ProductController extends AbstractController
         $product = $this->productService->findById($id);
 
         if (!$product) {
-            throw $this->createNotFoundException('Product not found');
+            throw $this->createNotFoundException('Product not found.');
         }
 
-        $this->productService->delete($product);
+        try {
+            $this->productService->delete($product);
+            $this->addFlash('success', 'Product deleted successfully.');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Failed to delete product.');
+        }
+
         return $this->redirectToRoute('product_index');
     }
 }

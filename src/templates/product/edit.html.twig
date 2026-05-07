@@ -3,7 +3,19 @@
 {% block title %}Edit Product{% endblock %}
 
 {% block body %}
-    <h1>Edit Product</h1>
-    {{ form(form) }}
+    <h1>Edit: {{ product.name }}</h1>
+
+    {% for message in app.flashes('error') %}
+        <div style="color: red;">{{ message }}</div>
+    {% endfor %}
+
+    {{ form_start(form) }}
+    {{ form_row(form.name) }}
+    {{ form_row(form.price) }}
+    {{ form_row(form.description) }}
+    {{ form_row(form.category) }}
+    <button type="submit">Save</button>
+    {{ form_end(form) }}
+
     <a href="{{ path('product_index') }}">Back</a>
 {% endblock %}
