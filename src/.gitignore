@@ -11,3 +11,8 @@
 .composer/
 .bash_history
 .gitconfig
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
