@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Product{% endblock %}
+
+{% block body %}
+    <h1>Edit Product</h1>
+    {{ form(form) }}
+    <a href="{{ path('product_index') }}">Back</a>
+{% endblock %}

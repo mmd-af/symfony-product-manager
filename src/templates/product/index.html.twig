@@ -5,7 +5,7 @@
 {% block body %}
     <h1>Products</h1>
 
-    <a href="#">Add Product</a>
+    <a href="{{ path('product_create') }}">Add Product</a>
 
     <table>
         <thead>
@@ -23,8 +23,11 @@
                 <td>{{ product.name }}</td>
                 <td>{{ product.price }}</td>
                 <td>
-                    <a href="#">Edit</a>
-                    <a href="#">Delete</a>
+                    <a href="{{ path('product_edit', {id: product.id}) }}">Edit</a>
+                    <form action="{{ path('product_delete', {id: product.id}) }}" method="POST">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ product.id) }}">
+                        <button type="submit">Delete</button>
+                    </form>
                 </td>
             </tr>
         {% else %}
