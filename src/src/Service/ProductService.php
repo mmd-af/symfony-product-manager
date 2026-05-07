@@ -10,7 +10,7 @@ use App\Entity\Product;
 final class ProductService
 {
     public function __construct(
-        private ProductRepositoryInterface $productRepository,
+        private readonly ProductRepositoryInterface $productRepository,
     )
     {
     }
