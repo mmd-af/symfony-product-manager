@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests;
 
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class RegistrationControllerTest extends WebTestCase
+final class RegistrationControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
     private UserRepository $userRepository;
@@ -15,36 +17,59 @@ class RegistrationControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = static::createClient();
-
-        // Ensure we have a clean database
         $container = static::getContainer();
 
-        /** @var EntityManager $em */
-        $em = $container->get('doctrine')->getManager();
+        /** @var EntityManagerInterface $em */
+        $em = $container->get('doctrine.orm.entity_manager');
+        $conn = $em->getConnection();
+
+        $conn->executeStatement('SET FOREIGN_KEY_CHECKS=0');
+        $conn->executeStatement('TRUNCATE TABLE user');
+        $conn->executeStatement('SET FOREIGN_KEY_CHECKS=1');
+
         $this->userRepository = $container->get(UserRepository::class);
-
-        foreach ($this->userRepository->findAll() as $user) {
-            $em->remove($user);
-        }
-
-        $em->flush();
     }
 
-    public function testRegister(): void
+    public function testRegistrationPageLoads(): void
     {
-        // Register a new user
         $this->client->request('GET', '/register');
+
         self::assertResponseIsSuccessful();
         self::assertPageTitleContains('Register');
+    }
+
+    public function testRegisterNewUser(): void
+    {
+        $this->client->request('GET', '/register');
 
         $this->client->submitForm('Register', [
-            'registration_form[email]' => 'me@example.com',
-            'registration_form[plainPassword]' => 'password',
+            'registration_form[email]' => 'newuser@example.com',
+            'registration_form[plainPassword]' => 'password123',
             'registration_form[agreeTerms]' => true,
         ]);
 
-        // Ensure the response redirects after submitting the form, the user exists, and is not verified
-        // self::assertResponseRedirects('/'); @TODO: set the appropriate path that the user is redirected to.
+        self::assertCount(1, $this->userRepository->findAll());
+    }
+
+    public function testRegisterWithDuplicateEmail(): void
+    {
+        // Register first time
+        $this->client->request('GET', '/register');
+        $this->client->submitForm('Register', [
+            'registration_form[email]' => 'duplicate@example.com',
+            'registration_form[plainPassword]' => 'password123',
+            'registration_form[agreeTerms]' => true,
+        ]);
+
+        // Try registering again with the same email
+        $this->client->request('GET', '/register');
+        $this->client->submitForm('Register', [
+            'registration_form[email]' => 'duplicate@example.com',
+            'registration_form[plainPassword]' => 'password123',
+            'registration_form[agreeTerms]' => true,
+        ]);
+
+        // Should stay on register page — only 1 user in DB
         self::assertCount(1, $this->userRepository->findAll());
     }
 }
